@@ -5,7 +5,9 @@
   "main": "main.js",
   "dependencies": {
     "@types/jquery": "^3.5.0",
-    "@types/p5": "^0.9.0"
+    "@types/p5": "^0.9.0",
+    "install": "^0.13.0",
+    "live-server": "^1.2.1"
   },
   "devDependencies": {},
   "scripts": {

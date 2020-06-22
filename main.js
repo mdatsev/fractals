@@ -7,7 +7,6 @@ function preload() {
 
 const rad = Math.PI / 180;
 
-
 function matrix(a, b, c, d, e, f) {
     const m = mat2d.fromValues(a, b, c, d, e, f);
     return m;
@@ -32,6 +31,7 @@ const leaf = [
     matrix(0.2,  -0.26,  0.23, 0.22, 0,  -1.6),
     matrix(-0.15, 0.28,  0.26, 0.24, 0, -0.44)
 ];
+let iterations = 2;
 
 function drawWithMatrix(t) {
     push();
@@ -59,6 +59,13 @@ function setup() {
     canvas.parent('canvas-container');
     translateX = width / 2;
     translateY = height / 2;
+
+    setupDrawing();
+
+    $('#fractal-iterations').on('input', function () {
+        iterations = $('#fractal-iterations').val();
+        draw();
+    });
 }
 
 function iterate(matrices, depth, curr = matrices) {
@@ -83,13 +90,14 @@ function draw() {
     translate(translateX, translateY);
     scale(scaleFactor);
 
-    iterate(leaf, 6)
+    iterate(coch, iterations)
 }
 
 let scaleFactor = 1.0;
 let translateX = 0.0;
 let translateY = 0.0;
 let zoomSensitivity = 0.001;
+
 function mouseWheel(event) {
     event.preventDefault();
     translateX -= mouseX;
@@ -105,4 +113,153 @@ function mouseWheel(event) {
 function mouseDragged() {
     translateX += mouseX - pmouseX;
     translateY += mouseY - pmouseY;
+}
+
+function setupDrawing() {
+    var drawerPlugins = [
+        // Drawing tools
+        'Pencil',
+        'Eraser',
+        'Text',
+        'Line',
+        'ArrowOneSide',
+        'ArrowTwoSide',
+        'Triangle',
+        'Rectangle',
+        'Circle',
+        'Image',
+        'BackgroundImage',
+        'Polygon',
+        'ImageCrop',
+
+        // Drawing options
+        //'ColorHtml5',
+        'Color',
+        'ShapeBorder',
+        'BrushSize',
+        'OpacityOption',
+
+        'LineWidth',
+        'StrokeWidth',
+
+        'Resize',
+        'ShapeContextMenu',
+        'CloseButton',
+        'OvercanvasPopup',
+        'OpenPopupButton',
+        'MinimizeButton',
+        'ToggleVisibilityButton',
+        'MovableFloatingMode',
+    ];
+
+    
+    var drawingCanvas = new DrawerJs.Drawer(null, {
+        plugins: drawerPlugins,
+        corePlugins: [
+            'Zoom' // use null here if you want to disable Zoom completely
+        ],
+        pluginsConfig: {
+            Image: {
+                scaleDownLargeImage: true,
+                maxImageSizeKb: 10240, //1MB
+                cropIsActive: true
+            },
+            BackgroundImage: {
+                scaleDownLargeImage: true,
+                maxImageSizeKb: 10240, 
+                imagePosition: 'center',
+                acceptedMIMETypes: ['image/jpeg', 'image/png', 'image/gif'] ,
+                dynamicRepositionImage: true,
+                dynamicRepositionImageThrottle: 100,
+                cropIsActive: false
+            },
+            Text: {
+                editIconMode : false,
+                editIconSize : 'large',
+                defaultValues : {
+                  fontSize: 72,
+                  lineHeight: 2,
+                  textFontWeight: 'bold'
+                },
+                predefined: {
+                  fontSize: [8, 12, 14, 16, 32, 40, 72],
+                  lineHeight: [1, 2, 3, 4, 6]
+                }
+            },
+            Zoom: {
+                enabled: true, 
+                showZoomTooltip: true, 
+                useWheelEvents: true,
+                zoomStep: 1.05, 
+                defaultZoom: 1, 
+                maxZoom: 32,
+                minZoom: 1, 
+                smoothnessOfWheel: 0,
+                //Moving:
+                enableMove: true,
+                enableWhenNoActiveTool: true,
+                enableButton: true
+            }
+        },
+        toolbars: {
+            drawingTools: {
+                position: 'top',         
+                positionType: 'outside',
+                customAnchorSelector: '#custom-toolbar-here',  
+                compactType: 'scrollable',   
+                hidden: false,     
+                toggleVisibilityButton: false,
+                fullscreenMode: {
+                    position: 'top', 
+                    hidden: false,
+                    toggleVisibilityButton: false
+                }
+            },
+            toolOptions: {
+                position: 'bottom', 
+                positionType: 'inside',
+                compactType: 'popup',
+                hidden: false,
+                toggleVisibilityButton: false,
+                fullscreenMode: {
+                    position: 'bottom', 
+                    compactType: 'popup',
+                    hidden: false,
+                    toggleVisibilityButton: false
+                }
+            },
+            settings : {
+                position : 'right', 
+                positionType: 'inside',					
+                compactType : 'scrollable',
+                hidden: false,	
+                toggleVisibilityButton: false,
+                fullscreenMode: {
+                    position : 'right', 
+                    hidden: false,
+                    toggleVisibilityButton: false
+                }
+            }
+        },
+        contentConfig: {
+            saveInHtml: false,
+            saveImageData: function(canvasId, imageData) {
+                console.log(imageData);
+                texture = loadImage(imageData);
+                draw();
+            }
+        },
+        defaultImageUrl: 'images/drawer.jpg',
+        defaultActivePlugin : { name : 'Pencil', mode : 'lastUsed'},
+        debug: true,
+        activeColor: '#a1be13',
+        transparentBackground: true,
+        align: 'floating',  //one of 'left', 'right', 'center', 'inline', 'floating'
+        lineAngleTooltip: { enabled: true, color: 'blue',  fontSize: 15},
+        imagesContainer: '#image-container',
+    }, 400, 400);
+
+
+    $('#drawing-container').append(drawingCanvas.getHtml());
+    drawingCanvas.onInsert();
 }
