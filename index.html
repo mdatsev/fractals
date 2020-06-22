@@ -7,14 +7,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.js"
         integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="DrawerJS/dist/drawerJs.css"/>
+    <script src="DrawerJS/dist/drawerJs.standalone.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 </head>
 
 <body>
-    <div id="main">
-        <div id="sidebar">
-            <input><input><input><input>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-2">
+                <input><input><input>
+                Iterations: <input id="fractal-iterations">
+                <button id="draw" class=" btn btn-primary"> Draw </button>
+                <div id="drawing-container"></div>
+            </div>
+            <div id="canvas-container" class="col-10"></div>
         </div>
-        <div id="canvas-container"></div>
     </div>
 
     <script language="javascript" type="text/javascript" src="main.js"></script>
