@@ -11,7 +11,7 @@ function matrix(a, b, c, d, e, f) {
     const m = mat2d.fromValues(a, b, c, d, e, f);
     return m;
 }
-
+const W = 512, H = 512;
 const T1 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 0, 0);
 
@@ -24,22 +24,41 @@ const T3 = matrix(1/3 * Math.cos(-60* rad), -1/3 * Math.sin(-60* rad),
 const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
 
-const coch = [T1, T2, T3, T4];
+const E = matrix(1, 0, 0, 1, 0, 0);
+
+const matrices = [T1, T2, T3, T4];
 const leaf = [
     matrix(0,        0,     0, 0.16, 0,     0),
     matrix(0.85,  0.04, -0.04, 0.85, 0,  -1.6),
     matrix(0.2,  -0.26,  0.23, 0.22, 0,  -1.6),
     matrix(-0.15, 0.28,  0.26, 0.24, 0, -0.44)
 ];
-let iterations = 2;
+let iterations = 0;
 
-function drawWithMatrix(t) {
+function drawBaseImage(t) {
     push();
-    const [a, b, c, d, e, f] = t;
-    applyMatrix(a, b, c, d, e * 512, f * 512);
-    image(texture, 0, -512);
+    applyMatrix(...t);
+    image(texture, 0, -1, 1, 1);
     pop();
 }
+
+function drawControl(t) {
+    push();
+    applyMatrix(...t);
+
+    stroke(255, 204, 0, 100);
+    strokeWeight(10/500);
+    noFill();
+
+    line(0, 0, 1, 0);
+    circle(1, 0, 1 / 10);
+
+    line(0, -1, 0, 0);
+    circle(0, -1, 1 / 10);
+
+    pop();
+}
+
 
 function mul(m1, m2) {
     const r = mat2d.create();
@@ -72,28 +91,36 @@ function iterate(matrices, depth, curr = matrices) {
     for (const m1 of curr) {
         const new_matrices = [];
         for (const m2 of matrices) {
-            new_matrices.push(rot(mul(m1, m2), Date.now() / 1000));
-            // new_matrices.push(mul(m1, m2));
+            new_matrices.push(mul(m1, m2));
         }
         if (depth > 0) {
             iterate(matrices, depth - 1, new_matrices);
         } else {
-            drawWithMatrix(m1);
+            drawBaseImage(m1);
         }
-
     }
+}
+
+function viewMatrix() {
+    return matrix(scaleFactor, 0, 0, scaleFactor, translateX, translateY);
 }
 
 function draw() {
     background(0);
-    scale(1, 1);
-    translate(translateX, translateY);
-    scale(scaleFactor);
+    applyMatrix(...viewMatrix());
 
-    iterate(coch, iterations)
+    iterate(matrices, iterations);
+    drawControl(E);
+    for (const m of matrices) {
+        drawControl(m);
+    }
+    // const [x, y] = getTopControlScreenLoc(T3);
+    // circle(x, y, 70);
+    // const [x1, y1] = getRightControlScreenLoc(T3);
+    // circle(x1, y1, 70);
 }
 
-let scaleFactor = 1.0;
+let scaleFactor = 500;
 let translateX = 0.0;
 let translateY = 0.0;
 let zoomSensitivity = 0.001;
@@ -108,6 +135,20 @@ function mouseWheel(event) {
     translateY *= delta;
     translateX += mouseX;
     translateY += mouseY;
+}
+
+function transform(mat, vec) {
+    const result = vec2.create();
+    vec2.transformMat2d(result, vec, mat);
+    return result;
+}
+
+function getRightControlScreenLoc(t) {
+    return transform(t, [1, 0]);
+}
+
+function getTopControlScreenLoc(t) {
+    return transform(t, [0, -1]);
 }
 
 function mouseDragged() {
@@ -246,7 +287,6 @@ function setupDrawing() {
             saveImageData: function(canvasId, imageData) {
                 console.log(imageData);
                 texture = loadImage(imageData);
-                draw();
             }
         },
         defaultImageUrl: 'images/drawer.jpg',
