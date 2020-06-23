@@ -1,0 +1,3 @@
+[submodule "DrawerJs"]
+	path = DrawerJs
+	url = https://github.com/carstenschaefer/DrawerJs
