@@ -25,6 +25,8 @@ const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
 
 const matrices = [T1, T2, T3, T4];
+const matrixes = {};
+let matricesSeq = 1;
 let iterations = 2;
 
 function drawWithMatrix(t) {
@@ -42,18 +44,86 @@ function mul(m1, m2) {
 }
 
 function setup() {
-    const container = $('#canvas-container');
-    const canvas = createCanvas(container.width(), container.height());
-    canvas.parent('canvas-container');
-    translateX = width / 2;
-    translateY = height / 2;
+    $(document).ready(function(){
+        const container = $('#canvas-container');
+        const canvas = createCanvas(container.width(), container.height());
+        canvas.parent('canvas-container');
+        translateX = width / 2;
+        translateY = height / 2;
 
-    setupDrawing();
+        var div = document.getElementById("canvas-container");
 
-    $('#fractal-iterations').on('input', function () {
-        iterations = $('#fractal-iterations').val();
+        div.mouseIsOver = false;
+        div.onmouseover = function() {
+        this.mouseIsOver = true;
+        };
+        div.onmouseout = function() {
+        this.mouseIsOver = false;
+        }
+
+        setupDrawing();
+
+        $('#fractal-iterations').on('input', (event) => {
+            iterations = event.target.value;
+            draw();
+        });
+    });
+}
+
+function setupMatrixEvents() {
+    $('.delete-matrix').on('click', function(event) {
+        const matrixId = event.target.attributes['data-matrix'].value;
+    
+        delete matrixes[matrixId];
+
+        let row = document.getElementById('matrix-row-' + matrixId);
+        row.parentElement.removeChild(row);
+
         draw();
     });
+
+    $('.matrix-value').on('input', (event) => {
+        const matrixId = event.target.parentElement.attributes['data-matrix'].value;
+        const matrixField = event.target.attributes['data-matrix-field'].value;
+
+        matrixes[matrixId][matrixField] = event.target.value;
+
+        draw();
+    });
+}
+
+function addMatrix() {
+    let matrixesContainer = document.getElementById("matrixes-container");
+
+    let matrixRow = document.createElement("div");
+    matrixRow.classList.add("row");
+    matrixRow.id = "matrix-row-" + matricesSeq;
+    matrixRow.innerHTML = `
+        <p class="col"> Matrix ` +  matricesSeq + `</p>
+        <button class="btn btn-warning delete-matrix" data-matrix="` + matricesSeq + `">Delete matrix</button> 
+        <div class="row matrix-row" data-matrix="` + matricesSeq + `">
+            <label for="matrix-a" class="col matrix-label">a: </label>
+            <input value="0" class="form-control col matrix-value" data-matrix-field='0' id="matrix-a"></input>
+            <label for="matrix-b" class="col matrix-label">b: </label>
+            <input value="0" class="form-control col matrix-value" data-matrix-field='1' id="matrix-b"></input>
+            <label for="matrix-e" class="col matrix-label">e: </label>
+            <input value="0" class="form-control col matrix-value" data-matrix-field='2' id="matrix-e"></input>
+        </div>
+        <div class="row matrix-row" data-matrix="` + matricesSeq + `">
+            <label for="matrix-c" class="col matrix-label">c: </label>
+            <input value="0" class="form-control col matrix-value" data-matrix-field='3' id="matrix-c"></input>
+            <label for="matrix-d" class="col matrix-label">d: </label>
+            <input value="0" class="form-control col matrix-value" data-matrix-field='4' id="matrix-d"></input>
+            <label for="matrix-f" class="col matrix-label">f: </label>
+            <input value="0" class="form-control col matrix-value" data-matrix-field='5' id="matrix-f"></input>
+        </div>
+    `;
+    let new_matrix = matrix(0, 0, 0, 0, 0, 0);
+    matrixes[matricesSeq++] = new_matrix;
+    
+    matrixesContainer.appendChild(matrixRow);
+
+    setupMatrixEvents();
 }
 
 function iterate(mcs, depth) {
@@ -85,21 +155,29 @@ let translateX = 0.0;
 let translateY = 0.0;
 let zoomSensitivity = 0.001;
 
+function isMouseOverCanvas() {
+    return document.getElementById('canvas-container').mouseIsOver;
+}
+
 function mouseWheel(event) {
-    event.preventDefault();
-    translateX -= mouseX;
-    translateY -= mouseY;
-    let delta = 1 - event.delta * zoomSensitivity;
-    scaleFactor *= delta;
-    translateX *= delta;
-    translateY *= delta;
-    translateX += mouseX;
-    translateY += mouseY;
+    if (isMouseOverCanvas()) {
+        event.preventDefault();
+        translateX -= mouseX;
+        translateY -= mouseY;
+        let delta = 1 - event.delta * zoomSensitivity;
+        scaleFactor *= delta;
+        translateX *= delta;
+        translateY *= delta;
+        translateX += mouseX;
+        translateY += mouseY;
+    }
 }
 
 function mouseDragged() {
-    translateX += mouseX - pmouseX;
-    translateY += mouseY - pmouseY;
+    if (isMouseOverCanvas()) {
+        translateX += mouseX - pmouseX;
+        translateY += mouseY - pmouseY;
+    }
 }
 
 function setupDrawing() {
@@ -244,7 +322,7 @@ function setupDrawing() {
         align: 'floating',  //one of 'left', 'right', 'center', 'inline', 'floating'
         lineAngleTooltip: { enabled: true, color: 'blue',  fontSize: 15},
         imagesContainer: '#image-container',
-    }, 400, 400);
+    }, 512, 512);
 
 
     $('#drawing-container').append(drawingCanvas.getHtml());

@@ -18,11 +18,16 @@
 
 <body>
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-2">
-                <input><input><input>
-                Iterations: <input type="number" value="1" id="fractal-iterations">
-                <button type="submit" id="draw" class=" btn btn-primary"> Draw </button>
+        <div class="row main">
+            <div class="col-2 sidebar">
+                <div class="form-group row">
+                    <label for="fractal-iterations" class="col">Iterations: </label>
+                    <input type="number" value="2" class="form-control col" id="fractal-iterations">
+                </div>
+                <div id="matrixes-container">
+
+                </div>
+                <button class="btn btn-primary" id="add-matrix" onclick="addMatrix()">Add matrix</button>
                 <div id="drawing-container"></div>
             </div>
             <div id="canvas-container" class="col-10"></div>
