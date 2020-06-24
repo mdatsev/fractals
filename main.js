@@ -25,7 +25,7 @@ const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
 
 
-const matrixes = { 0: T1, 1: T2, 2: T3, 3: T4 };
+const matrices = { 0: T1, 1: T2, 2: T3, 3: T4 };
 let matricesSeq = 1;
 // const matrices = [T1, T2, T3, T4];
 const E = matrix(1, 0, 0, 1, 0, 0);
@@ -102,7 +102,7 @@ function setup() {
             draw();
         });
 
-        for (const m of Object.values(matrixes)) {
+        for (const m of Object.values(matrices)) {
             console.log(m);
             addMatrix(m);
         }
@@ -113,7 +113,7 @@ function setupMatrixEvents() {
     $('.delete-matrix').on('click', function(event) {
         const matrixId = event.target.attributes['data-matrix'].value;
     
-        delete matrixes[matrixId];
+        delete matrices[matrixId];
 
         let row = document.getElementById('matrix-row-' + matrixId);
         row.parentElement.removeChild(row);
@@ -125,14 +125,14 @@ function setupMatrixEvents() {
         const matrixId = event.target.parentElement.attributes['data-matrix'].value;
         const matrixField = event.target.attributes['data-matrix-field'].value;
 
-        matrixes[matrixId][matrixField] = event.target.value;
+        matrices[matrixId][matrixField] = event.target.value;
 
         draw();
     });
 }
 
 function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
-    let matrixesContainer = document.getElementById("matrixes-container");
+    let matricesContainer = document.getElementById("matrices-container");
 
     let matrixRow = document.createElement("div");
     matrixRow.classList.add("row");
@@ -158,9 +158,9 @@ function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
         </div>
     `;
     let new_matrix = defaultMatrix;
-    matrixes[matricesSeq++] = new_matrix;
+    matrices[matricesSeq++] = new_matrix;
     
-    matrixesContainer.appendChild(matrixRow);
+    matricesContainer.appendChild(matrixRow);
 
     setupMatrixEvents();
 }
@@ -205,15 +205,15 @@ function draw() {
     background(0);
     applyMatrix(...viewMatrix());
 
-    iterate(Object.values(matrixes), iterations);
+    iterate(Object.values(matrices), iterations);
     drawControl(E);
 
     let closestPoint;
     let closestLineDist = Infinity;
     let closestPointOwner;
     let closestLineOwner;
-    for (const k in matrixes) {
-        const m = matrixes[k];
+    for (const k in matrices) {
+        const m = matrices[k];
         const [tx, ty] = getTopControlScreenLoc(m);
         const [rx, ry] = getRightControlScreenLoc(m);
         const [ox, oy] = getOriginControlScreenLoc(m);
@@ -235,8 +235,8 @@ function draw() {
     }
     console.log(closestLineDist)
 
-    for (const k in matrixes) {
-        drawControl(matrixes[k], k == closestLineOwner);
+    for (const k in matrices) {
+        drawControl(matrices[k], k == closestLineOwner);
     }
     strokeWeight(10/500);
     noFill();
