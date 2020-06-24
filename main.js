@@ -25,16 +25,22 @@ const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
 
 
-const matrices = { 0: T1, 1: T2, 2: T3, 3: T4 };
+const E = matrix(1, 0, 0, 1, 0, 0);
 let matricesSeq = 1;
 // const matrices = [T1, T2, T3, T4];
-const E = matrix(1, 0, 0, 1, 0, 0);
 const leaf = [
     matrix(0,        0,     0, 0.16, 0,     0),
     matrix(0.85,  0.04, -0.04, 0.85, 0,  -1.6),
     matrix(0.2,  -0.26,  0.23, 0.22, 0,  -1.6),
     matrix(-0.15, 0.28,  0.26, 0.24, 0, -0.44)
 ];
+const matrices = { 0: T1, 1: T2, 2: T3, 3: T4};
+Object.defineProperty(matrices, 'E', {
+    value: E,
+    writable: true,
+    enumerable: false,
+    configurable: true
+});
 
 let iterations = 2;
 
@@ -90,6 +96,7 @@ function rot(m1, a) {
 }
 
 function setup() {
+    oncontextmenu = () => false // disable context meny
     $(document).ready(function(){
         const container = $('#canvas-container');
         const canvas = createCanvas(container.width(), container.height());
@@ -181,7 +188,7 @@ function iterate(matrices, depth, curr = matrices) {
     for (const m1 of curr) {
         const new_matrices = [];
         for (const m2 of matrices) {
-            new_matrices.push(mul(m1, m2));
+            new_matrices.push(mul(m1,inv(E),  m2));
         }
         if (depth > 0) {
             iterate(matrices, depth - 1, new_matrices);
@@ -224,7 +231,7 @@ function draw() {
     iterate(Object.values(matrices), iterations);
     drawControl(E);
 
-    for (const k in matrices) {
+    for (const k in {E, ...matrices}) {
         drawControl(matrices[k], closestOwner == k ? closestAction : null);
     }
 }
@@ -275,7 +282,7 @@ function getOriginControlScreenLoc(t) {
 function mousePressed() {
     let closestPointDistSq = Infinity;
     let closestLineDistSq = Infinity;
-    for (const k in matrices) {
+    for (const k in {E, ...matrices}) {
         const m = matrices[k];
         const [tx, ty] = getTopControlScreenLoc(m);
         const [rx, ry] = getRightControlScreenLoc(m);
@@ -296,19 +303,33 @@ function mousePressed() {
         const maxd = Math.min(td, rd);
         if (closestLineDistSq > maxd) {
             closestLineDistSq = maxd;
-            closestOwner = k;
         }
         
         const isInCircle = Math.sqrt(closestPointDistSq) < scaleFactor / 50;
         console.log(closestPointDistSq)
         if (topDistSq == closestPointDistSq && isInCircle) {
-            closestAction = 'top';
+            if (mouseButton == RIGHT) {
+                closestAction = 'top';
+                closestOwner = k;
+            } else {
+                closestAction = 'rotate';
+                closestOwner = k;
+            }
         }
         if (rightDistSq == closestPointDistSq && isInCircle) {
-            closestAction = 'right';
+            if (mouseButton == RIGHT) {
+                closestAction = 'right';
+                closestOwner = k;
+            } else {
+                closestAction = 'rotate';
+                closestOwner = k;
+            }
         }
         if (!closestAction && closestLineDistSq == maxd && Math.sqrt(closestLineDistSq) < scaleFactor / 70) {
-            closestAction = 'origin';
+            if (mouseButton == RIGHT) {
+                closestAction = 'origin';
+                closestOwner = k;
+            }
         }
     }
     console.log(closestAction);
@@ -321,8 +342,37 @@ function mouseReleased() {
 
 function mouseDragged() {
     if (isMouseOverCanvas()) {
-        translateX += mouseX - pmouseX;
-        translateY += mouseY - pmouseY;
+        const [tX, tY] = transform(inv(viewMatrix()), [mouseX, mouseY])
+        const [fX, fY] = transform(inv(viewMatrix()), [pmouseX, pmouseY])
+        const [dX, dY] = [tX - fX, tY - fY];
+        const currMatrix = matrices[closestOwner];
+        if (closestAction == 'origin') {
+            currMatrix[4] += dX;
+            currMatrix[5] += dY;
+        } else if (closestAction == 'right') {
+            currMatrix[0] += dX;
+            currMatrix[1] += dY;
+        } else if (closestAction == 'top') {
+            currMatrix[2] -= dX;
+            currMatrix[3] -= dY;
+        } else if (closestAction == 'rotate') {
+            const [oX, oY] = transform(currMatrix, [0, 0]);
+
+            const p12sq = distSq(0, 0, tX, tY);
+            const p13sq = distSq(0, 0, fX, fY);
+            const p23sq = distSq(tX, tY, fX, fY);
+    
+            const cross = tX * fY - tY * fX;
+
+            const angle = -Math.sign(cross) * Math.acos((p12sq + p13sq - p23sq) / (2 * Math.sqrt(p12sq) * Math.sqrt(p13sq)));
+            if (isNaN(angle)) {
+                return;
+            }
+            mat2d.rotate(currMatrix, currMatrix, angle);
+        } else {
+            translateX += mouseX - pmouseX;
+            translateY += mouseY - pmouseY;
+        }
     }
 }
 
