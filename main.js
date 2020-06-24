@@ -472,4 +472,7 @@ function setupDrawing() {
 
     $('#drawing-container').append(drawingCanvas.getHtml());
     drawingCanvas.onInsert();
+
+    // hack for toni
+    $('#drawing-container > img')[0].style.removeProperty('position');
 }
