@@ -42,7 +42,7 @@ const presets = {
     },
 } 
 
-const matrixes = { 0: T1, 1: T2, 2: T3, 3: T4 };
+const matrixes = presets.koch;
 let matricesSeq = 1;
 // const matrices = [T1, T2, T3, T4];
 const E = matrix(1, 0, 0, 1, 0, 0);
