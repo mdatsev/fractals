@@ -19,6 +19,8 @@ body {
 .sidebar {
     grid-area: sidebar;
     padding: 10px;
+    height: 100%;
+    overflow: scroll;
 }
 
 .matrix-row {
@@ -32,4 +34,5 @@ body {
 
 #canvas-container {
     grid-area: canvas;
+    padding:0;
 }

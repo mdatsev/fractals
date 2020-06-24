@@ -37,6 +37,7 @@ const leaf = [
 ];
 
 let iterations = 2;
+let showControls = true;
 
 function drawBaseImage(t) {
     push();
@@ -97,7 +98,10 @@ function setup() {
 
         $('#fractal-iterations').on('input', (event) => {
             iterations = event.target.value;
-            draw();
+        });
+
+        $('#show-controls').change(function () {
+            showControls = this.checked;
         });
 
         for (const m of Object.values(matrixes)) {
@@ -115,8 +119,6 @@ function setupMatrixEvents() {
 
         let row = document.getElementById('matrix-row-' + matrixId);
         row.parentElement.removeChild(row);
-
-        draw();
     });
 
     $('.matrix-value').on('input', (event) => {
@@ -124,8 +126,6 @@ function setupMatrixEvents() {
         const matrixField = event.target.attributes['data-matrix-field'].value;
 
         matrixes[matrixId][matrixField] = event.target.value;
-
-        draw();
     });
 }
 
@@ -188,9 +188,12 @@ function draw() {
     const matrices = Object.values(matrixes);
 
     iterate(matrices, iterations);
-    drawControl(E);
-    for (const m of matrices) {
-        drawControl(m);
+
+    if (showControls) {
+        drawControl(E);
+        for (const m of matrices) {
+            drawControl(m);
+        }
     }
     // const [x, y] = getTopControlScreenLoc(T3);
     // circle(x, y, 70);
