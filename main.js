@@ -27,7 +27,7 @@ const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
 
 const E = matrix(1, 0, 0, 1, 0, 0);
 const presets = {
-    "koch": {
+    koch: {
         0: matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                 1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 0, 0),
         1: matrix(1/3 * Math.cos( 60* rad), -1/3 * Math.sin( 60* rad),
@@ -37,22 +37,22 @@ const presets = {
         3: matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                 1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0),
     },
-    "sierpinski": {
+    sierpinski: {
         0: matrix(0.5, 0, 0, 0.5, 0, 0),
         1: matrix(0.5, 0, 0, 0.5, 0.5, 0),
         2: matrix(0.5, 0, 0, 0.5, 0.25, -0.5),
     },
+    leaf: {
+        0: matrix(0.01,     0,     0, 0.16, 0,     0),
+        1: matrix(0.85, -0.04,  0.04, 0.85, 0,  -1.6),
+        2: matrix(0.2,   0.23, -0.26, 0.22, 0,  -1.6),
+        3: matrix(-0.15, 0.26,  0.28, 0.24, 0, -0.44)
+    }
 } 
 
 const matrices = presets.koch;
 let matricesSeq = 1;
 // const matrices = [T1, T2, T3, T4];
-const leaf = [
-    matrix(0,        0,     0, 0.16, 0,     0),
-    matrix(0.85,  0.04, -0.04, 0.85, 0,  -1.6),
-    matrix(0.2,  -0.26,  0.23, 0.22, 0,  -1.6),
-    matrix(-0.15, 0.28,  0.26, 0.24, 0, -0.44)
-];
 Object.defineProperty(matrices, 'E', {
     value: E,
     writable: true,
@@ -229,7 +229,7 @@ function iterate(matrices, depth, curr = matrices) {
     for (const m1 of curr) {
         const new_matrices = [];
         for (const m2 of matrices) {
-            new_matrices.push(mul(m1,inv(E),  m2));
+            new_matrices.push(rot(mul(m1,inv(E),  m2), new Date() / 1000));
         }
         if (depth > 0) {
             iterate(matrices, depth - 1, new_matrices);
@@ -266,7 +266,7 @@ let closestOwner = -1;
 let closestAction;
 
 function draw() {
-    background(0);
+    background(0, 0, 0, 10);
     applyMatrix(...viewMatrix());
 
     iterate(Object.values(matrices), iterations);
@@ -369,10 +369,8 @@ function mousePressed() {
             }
         }
         if (!closestAction && closestLineDistSq == maxd && Math.sqrt(closestLineDistSq) < scaleFactor / 70) {
-            if (mouseButton == RIGHT) {
-                closestAction = 'origin';
-                closestOwner = k;
-            }
+            closestAction = 'origin';
+            closestOwner = k;
         }
     }
     console.log(closestAction);
@@ -406,8 +404,8 @@ function mouseDragged() {
             const p23sq = distSq(tX, tY, fX, fY);
     
             const cross = tX * fY - tY * fX;
-
-            const angle = -Math.sign(cross) * Math.acos((p12sq + p13sq - p23sq) / (2 * Math.sqrt(p12sq) * Math.sqrt(p13sq)));
+            const det = currMatrix[0] * currMatrix[3] - currMatrix[1] * currMatrix[2];
+            const angle = - Math.sign(det) * Math.sign(cross) * Math.acos((p12sq + p13sq - p23sq) / (2 * Math.sqrt(p12sq) * Math.sqrt(p13sq)));
             if (isNaN(angle)) {
                 return;
             }
