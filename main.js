@@ -45,11 +45,11 @@ function drawBaseImage(t) {
     pop();
 }
 
-function drawControl(t) {
+function drawControl(t, selected) {
     push();
     applyMatrix(...t);
 
-    stroke(255, 204, 0, 100);
+    stroke(255, 204, 0, selected ? 255 : 60);
     strokeWeight(10/500);
     noFill();
 
@@ -63,9 +63,11 @@ function drawControl(t) {
 }
 
 
-function mul(m1, m2) {
+function mul(...matrices) {
     const r = mat2d.create();
-    mat2d.mul(r, m1, m2);
+    for (const m of matrices) {
+        mat2d.mul(r, r, m);
+    }
     return r;
 }
 
@@ -181,21 +183,66 @@ function viewMatrix() {
     return matrix(scaleFactor, 0, 0, scaleFactor, translateX, translateY);
 }
 
+function inv(m) {
+    const r = mat2d.create();
+    mat2d.invert(r, m);
+    return r;
+}
+
+function distSq(x1, y1, x2, y2) {
+    return (x1 - x2) ** 2 + (y1 - y2) ** 2;
+}
+
+function distToSegmentSq(x, y, x1, y1, x2, y2) {
+  var l2 = distSq(x1, y1, x2, y2);
+  if (l2 == 0) return distSq(p, v);
+  var t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return distSq(x, y, x1 + t * (x2 - x1), y1 + t * (y2 - y1));
+}
+
 function draw() {
     background(0);
     applyMatrix(...viewMatrix());
 
-    const matrices = Object.values(matrixes);
-
-    iterate(matrices, iterations);
+    iterate(Object.values(matrixes), iterations);
     drawControl(E);
-    for (const m of matrices) {
-        drawControl(m);
+
+    let closestPoint;
+    let closestLineDist = Infinity;
+    let closestPointOwner;
+    let closestLineOwner;
+    for (const k in matrixes) {
+        const m = matrixes[k];
+        const [tx, ty] = getTopControlScreenLoc(m);
+        const [rx, ry] = getRightControlScreenLoc(m);
+        const [ox, oy] = getOriginControlScreenLoc(m);
+        for (const [x, y] of [[tx, ty], [rx, ry]]) {
+            if (!closestPoint || distSq(x, y, mouseX, mouseY) < distSq(closestPoint[0], closestPoint[1], mouseX, mouseY)) {
+                closestPoint = [x, y];
+                clIdx = k;
+            }
+        }
+
+        const td = distToSegmentSq(mouseX, mouseY, tx, ty, ox, oy);
+        const rd = distToSegmentSq(mouseX, mouseY, rx, ry, ox, oy);
+        const maxd = Math.max(td, rd);
+        if (closestLineDist > maxd) {
+            closestLineDist = maxd;
+            closestLineOwner = k;
+        }
+        
     }
-    // const [x, y] = getTopControlScreenLoc(T3);
-    // circle(x, y, 70);
-    // const [x1, y1] = getRightControlScreenLoc(T3);
-    // circle(x1, y1, 70);
+
+    for (const k in matrixes) {
+        drawControl(matrixes[k], k == closestLineOwner);
+    }
+    strokeWeight(10/500);
+    noFill();
+    stroke(255, 255, 255);
+    const [x, y] = transform(inv(viewMatrix()), closestPoint);
+    console.log(x, y);
+    circle(x, y, 1/80);
 }
 
 let scaleFactor = 500;
@@ -221,18 +268,24 @@ function mouseWheel(event) {
     }
 }
 
-function transform(mat, vec) {
+function transform(...args) {
+    const vec = args.pop();
+    const matrices = args;
     const result = vec2.create();
-    vec2.transformMat2d(result, vec, mat);
+    vec2.transformMat2d(result, vec, mul(...matrices));
     return result;
 }
 
 function getRightControlScreenLoc(t) {
-    return transform(t, [1, 0]);
+    return transform(viewMatrix(), t, [1, 0]);
 }
 
 function getTopControlScreenLoc(t) {
-    return transform(t, [0, -1]);
+    return transform(viewMatrix(), t, [0, -1]);
+}
+
+function getOriginControlScreenLoc(t) {
+    return transform(viewMatrix(), t, [0, 0]);
 }
 
 function mouseDragged() {
