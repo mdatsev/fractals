@@ -63,16 +63,28 @@ function drawBaseImage(t) {
     pop();
 }
 
-function drawControl(t) {
+function drawControl(t, action) {
     push();
     applyMatrix(...t);
 
-    stroke(255, 204, 0, 100);
+    stroke(255, 204, 0, action ? 255 : 60);
     strokeWeight(10/500);
     noFill();
 
+    if (action == 'right') {
+        fill(255, 204, 0,);
+    } else {
+        noFill();
+    }
+
     line(0, 0, 1, 0);
     circle(1, 0, 1 / 10);
+
+    if (action == 'top') {
+        fill(255, 204, 0,);
+    } else {
+        noFill();
+    }
 
     line(0, -1, 0, 0);
     circle(0, -1, 1 / 10);
@@ -81,9 +93,11 @@ function drawControl(t) {
 }
 
 
-function mul(m1, m2) {
+function mul(...matrices) {
     const r = mat2d.create();
-    mat2d.mul(r, m1, m2);
+    for (const m of matrices) {
+        mat2d.mul(r, r, m);
+    }
     return r;
 }
 
@@ -153,7 +167,7 @@ function setupMatrixEvents() {
     $('.delete-matrix').on('click', function(event) {
         const matrixId = event.target.attributes['data-matrix'].value;
     
-        delete matrixes[matrixId];
+        delete matrices[matrixId];
 
         let row = document.getElementById('matrix-row-' + matrixId);
         row.parentElement.removeChild(row);
@@ -168,7 +182,7 @@ function setupMatrixEvents() {
 }
 
 function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
-    let matrixesContainer = document.getElementById("matrixes-container");
+    let matricesContainer = document.getElementById("matrices-container");
 
     let matrixRow = document.createElement("div");
     matrixRow.classList.add("row");
@@ -196,9 +210,9 @@ function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
         </div>
     `;
     let new_matrix = defaultMatrix;
-    matrixes[matricesSeq++] = new_matrix;
+    matrices[matricesSeq++] = new_matrix;
     
-    matrixesContainer.appendChild(matrixRow);
+    matricesContainer.appendChild(matrixRow);
 
     setupMatrixEvents();
 }
@@ -221,6 +235,28 @@ function viewMatrix() {
     return matrix(scaleFactor, 0, 0, scaleFactor, translateX, translateY);
 }
 
+function inv(m) {
+    const r = mat2d.create();
+    mat2d.invert(r, m);
+    return r;
+}
+
+function distSq(x1, y1, x2, y2) {
+    return (x1 - x2) ** 2 + (y1 - y2) ** 2;
+}
+
+function distToSegmentSq(x, y, x1, y1, x2, y2) {
+  let l2 = distSq(x1, y1, x2, y2);
+  if (l2 == 0) return distSq(x, y, x1, y1);
+  let t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return distSq(x, y, x1 + t * (x2 - x1), y1 + t * (y2 - y1));
+}
+
+
+let closestOwner = -1;
+let closestAction;
+
 function draw() {
     background(0);
     applyMatrix(...viewMatrix());
@@ -235,10 +271,6 @@ function draw() {
             drawControl(m);
         }
     }
-    // const [x, y] = getTopControlScreenLoc(T3);
-    // circle(x, y, 70);
-    // const [x1, y1] = getRightControlScreenLoc(T3);
-    // circle(x1, y1, 70);
 }
 
 let scaleFactor = 500;
@@ -264,18 +296,71 @@ function mouseWheel(event) {
     }
 }
 
-function transform(mat, vec) {
+function transform(...args) {
+    const vec = args.pop();
+    const matrices = args;
     const result = vec2.create();
-    vec2.transformMat2d(result, vec, mat);
+    vec2.transformMat2d(result, vec, mul(...matrices));
     return result;
 }
 
 function getRightControlScreenLoc(t) {
-    return transform(t, [1, 0]);
+    return transform(viewMatrix(), t, [1, 0]);
 }
 
 function getTopControlScreenLoc(t) {
-    return transform(t, [0, -1]);
+    return transform(viewMatrix(), t, [0, -1]);
+}
+
+function getOriginControlScreenLoc(t) {
+    return transform(viewMatrix(), t, [0, 0]);
+}
+
+function mousePressed() {
+    let closestPointDistSq = Infinity;
+    let closestLineDistSq = Infinity;
+    for (const k in matrices) {
+        const m = matrices[k];
+        const [tx, ty] = getTopControlScreenLoc(m);
+        const [rx, ry] = getRightControlScreenLoc(m);
+        const [ox, oy] = getOriginControlScreenLoc(m);
+
+        const topDistSq = distSq(tx, ty, mouseX, mouseY);
+        if (topDistSq < closestPointDistSq) {
+            closestPointDistSq = topDistSq;
+        }
+
+        const rightDistSq = distSq(rx, ry, mouseX, mouseY);
+        if (rightDistSq < closestPointDistSq) {
+            closestPointDistSq = rightDistSq;
+        }
+
+        const td = distToSegmentSq(mouseX, mouseY, tx, ty, ox, oy);
+        const rd = distToSegmentSq(mouseX, mouseY, rx, ry, ox, oy);
+        const maxd = Math.min(td, rd);
+        if (closestLineDistSq > maxd) {
+            closestLineDistSq = maxd;
+            closestOwner = k;
+        }
+        
+        const isInCircle = Math.sqrt(closestPointDistSq) < scaleFactor / 50;
+        console.log(closestPointDistSq)
+        if (topDistSq == closestPointDistSq && isInCircle) {
+            closestAction = 'top';
+        }
+        if (rightDistSq == closestPointDistSq && isInCircle) {
+            closestAction = 'right';
+        }
+        if (!closestAction && closestLineDistSq == maxd && Math.sqrt(closestLineDistSq) < scaleFactor / 70) {
+            closestAction = 'origin';
+        }
+    }
+    console.log(closestAction);
+}
+
+function mouseReleased() {
+    closestOwner = -1;
+    closestAction = null;
 }
 
 function mouseDragged() {
@@ -417,4 +502,7 @@ function setupDrawing() {
 
     $('#drawing-container').append(drawingCanvas.getHtml());
     drawingCanvas.onInsert();
+
+    // hack for toni
+    $('#drawing-container > img')[0].style.removeProperty('position');
 }
