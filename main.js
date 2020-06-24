@@ -24,6 +24,23 @@ const T3 = matrix(1/3 * Math.cos(-60* rad), -1/3 * Math.sin(-60* rad),
 const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
 
+const presets = {
+    "koch": {
+        0: matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
+                1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 0, 0),
+        1: matrix(1/3 * Math.cos( 60* rad), -1/3 * Math.sin( 60* rad),
+                1/3 * Math.sin( 60* rad),  1/3 * Math.cos( 60* rad), 1/3, 0),
+        2: matrix(1/3 * Math.cos(-60* rad), -1/3 * Math.sin(-60* rad),
+                1/3 * Math.sin(-60* rad), 1/3 * Math.cos(-60* rad), 1/2, -Math.sqrt(3)/6),
+        3: matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
+                1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0),
+    },
+    "sierpinski": {
+        0: matrix(0.5, 0, 0, 0.5, 0, 0),
+        1: matrix(0.5, 0, 0, 0.5, 0.5, 0),
+        2: matrix(0.5, 0, 0, 0.5, 0.25, -0.5),
+    },
+} 
 
 const matrixes = { 0: T1, 1: T2, 2: T3, 3: T4 };
 let matricesSeq = 1;
@@ -104,11 +121,32 @@ function setup() {
             showControls = this.checked;
         });
 
+        $('#load-preset').change(function () {
+            if (presets[this.value]) {
+                loadPreset(presets[this.value]);
+            }
+        });
+
         for (const m of Object.values(matrixes)) {
-            console.log(m);
             addMatrix(m);
         }
     });
+}
+
+function loadPreset(presetMatrices) {
+    matricesSeq = 1;
+
+    for (const elem of $("#matrixes-container").children()) {
+        elem.parentElement.removeChild(elem);
+    }
+
+    for (const m of Object.keys(matrixes)) {
+        delete matrixes[m];
+    }
+
+    for (const m of Object.keys(presetMatrices)) {
+        addMatrix(presetMatrices[m]);
+    }
 }
 
 function setupMatrixEvents() {
@@ -134,6 +172,8 @@ function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
 
     let matrixRow = document.createElement("div");
     matrixRow.classList.add("row");
+    matrixRow.classList.add("matrix");
+
     matrixRow.id = "matrix-row-" + matricesSeq;
     matrixRow.innerHTML = `
         <p class="col"> Matrix ${matricesSeq}</p>
@@ -250,17 +290,12 @@ function setupDrawing() {
         // Drawing tools
         'Pencil',
         'Eraser',
-        'Text',
         'Line',
-        'ArrowOneSide',
-        'ArrowTwoSide',
         'Triangle',
         'Rectangle',
         'Circle',
         'Image',
-        'BackgroundImage',
         'Polygon',
-        'ImageCrop',
 
         // Drawing options
         //'ColorHtml5',
@@ -271,15 +306,6 @@ function setupDrawing() {
 
         'LineWidth',
         'StrokeWidth',
-
-        'Resize',
-        'ShapeContextMenu',
-        'CloseButton',
-        'OvercanvasPopup',
-        'OpenPopupButton',
-        'MinimizeButton',
-        'ToggleVisibilityButton',
-        'MovableFloatingMode',
     ];
 
     
@@ -386,7 +412,7 @@ function setupDrawing() {
         align: 'floating',  //one of 'left', 'right', 'center', 'inline', 'floating'
         lineAngleTooltip: { enabled: true, color: 'blue',  fontSize: 15},
         imagesContainer: '#image-container',
-    }, 512, 512);
+    }, 250, 250);
 
 
     $('#drawing-container').append(drawingCanvas.getHtml());
