@@ -194,9 +194,9 @@ function distSq(x1, y1, x2, y2) {
 }
 
 function distToSegmentSq(x, y, x1, y1, x2, y2) {
-  var l2 = distSq(x1, y1, x2, y2);
-  if (l2 == 0) return distSq(p, v);
-  var t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
+  let l2 = distSq(x1, y1, x2, y2);
+  if (l2 == 0) return distSq(x, y, x1, y1);
+  let t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
   t = Math.max(0, Math.min(1, t));
   return distSq(x, y, x1 + t * (x2 - x1), y1 + t * (y2 - y1));
 }
@@ -226,13 +226,14 @@ function draw() {
 
         const td = distToSegmentSq(mouseX, mouseY, tx, ty, ox, oy);
         const rd = distToSegmentSq(mouseX, mouseY, rx, ry, ox, oy);
-        const maxd = Math.max(td, rd);
+        const maxd = Math.min(td, rd);
         if (closestLineDist > maxd) {
             closestLineDist = maxd;
             closestLineOwner = k;
         }
         
     }
+    console.log(closestLineDist)
 
     for (const k in matrixes) {
         drawControl(matrixes[k], k == closestLineOwner);
@@ -241,7 +242,7 @@ function draw() {
     noFill();
     stroke(255, 255, 255);
     const [x, y] = transform(inv(viewMatrix()), closestPoint);
-    console.log(x, y);
+    // console.log(x, y);
     circle(x, y, 1/80);
 }
 
