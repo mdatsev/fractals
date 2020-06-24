@@ -24,29 +24,19 @@ const T3 = matrix(1/3 * Math.cos(-60* rad), -1/3 * Math.sin(-60* rad),
 const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
                   1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
 
-<<<<<<< HEAD
 
-const matrices = [T1, T2, T3, T4];
-const matrixes = {};
+const matrixes = { 0: T1, 1: T2, 2: T3, 3: T4 };
 let matricesSeq = 1;
-const coch = [T1, T2, T3, T4];
-=======
+// const matrices = [T1, T2, T3, T4];
 const E = matrix(1, 0, 0, 1, 0, 0);
-
-const matrices = [T1, T2, T3, T4];
->>>>>>> e5f18aac30ed6d9abd3b42bf624e100d957f0b43
 const leaf = [
     matrix(0,        0,     0, 0.16, 0,     0),
     matrix(0.85,  0.04, -0.04, 0.85, 0,  -1.6),
     matrix(0.2,  -0.26,  0.23, 0.22, 0,  -1.6),
     matrix(-0.15, 0.28,  0.26, 0.24, 0, -0.44)
 ];
-<<<<<<< HEAD
 
 let iterations = 2;
-=======
-let iterations = 0;
->>>>>>> e5f18aac30ed6d9abd3b42bf624e100d957f0b43
 
 function drawBaseImage(t) {
     push();
@@ -97,11 +87,11 @@ function setup() {
 
         div.mouseIsOver = false;
         div.onmouseover = function() {
-        this.mouseIsOver = true;
+            this.mouseIsOver = true;
         };
         div.onmouseout = function() {
-        this.mouseIsOver = false;
-        }
+            this.mouseIsOver = false;
+        };
 
         setupDrawing();
 
@@ -109,6 +99,11 @@ function setup() {
             iterations = event.target.value;
             draw();
         });
+
+        for (const m of Object.values(matrixes)) {
+            console.log(m);
+            addMatrix(m);
+        }
     });
 }
 
@@ -134,33 +129,33 @@ function setupMatrixEvents() {
     });
 }
 
-function addMatrix() {
+function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
     let matrixesContainer = document.getElementById("matrixes-container");
 
     let matrixRow = document.createElement("div");
     matrixRow.classList.add("row");
     matrixRow.id = "matrix-row-" + matricesSeq;
     matrixRow.innerHTML = `
-        <p class="col"> Matrix ` +  matricesSeq + `</p>
-        <button class="btn btn-warning delete-matrix" data-matrix="` + matricesSeq + `">Delete matrix</button> 
-        <div class="row matrix-row" data-matrix="` + matricesSeq + `">
+        <p class="col"> Matrix ${matricesSeq}</p>
+        <button class="btn btn-warning delete-matrix" data-matrix="${matricesSeq}">Delete matrix</button> 
+        <div class="row matrix-row" data-matrix="${matricesSeq}">
             <label for="matrix-a" class="col matrix-label">a: </label>
-            <input value="0" class="form-control col matrix-value" data-matrix-field='0' id="matrix-a"></input>
+            <input value="${defaultMatrix[0]}" class="form-control col matrix-value" data-matrix-field='0' id="matrix-a"></input>
             <label for="matrix-b" class="col matrix-label">b: </label>
-            <input value="0" class="form-control col matrix-value" data-matrix-field='1' id="matrix-b"></input>
+            <input value="${defaultMatrix[1]}" class="form-control col matrix-value" data-matrix-field='1' id="matrix-b"></input>
             <label for="matrix-e" class="col matrix-label">e: </label>
-            <input value="0" class="form-control col matrix-value" data-matrix-field='2' id="matrix-e"></input>
+            <input value="${defaultMatrix[4]}" class="form-control col matrix-value" data-matrix-field='4' id="matrix-e"></input>
         </div>
-        <div class="row matrix-row" data-matrix="` + matricesSeq + `">
+        <div class="row matrix-row" data-matrix="${matricesSeq}">
             <label for="matrix-c" class="col matrix-label">c: </label>
-            <input value="0" class="form-control col matrix-value" data-matrix-field='3' id="matrix-c"></input>
+            <input value="${defaultMatrix[2]}" class="form-control col matrix-value" data-matrix-field='2' id="matrix-c"></input>
             <label for="matrix-d" class="col matrix-label">d: </label>
-            <input value="0" class="form-control col matrix-value" data-matrix-field='4' id="matrix-d"></input>
+            <input value="${defaultMatrix[3]}" class="form-control col matrix-value" data-matrix-field='3' id="matrix-d"></input>
             <label for="matrix-f" class="col matrix-label">f: </label>
-            <input value="0" class="form-control col matrix-value" data-matrix-field='5' id="matrix-f"></input>
+            <input value="${defaultMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5' id="matrix-f"></input>
         </div>
     `;
-    let new_matrix = matrix(0, 0, 0, 0, 0, 0);
+    let new_matrix = defaultMatrix;
     matrixes[matricesSeq++] = new_matrix;
     
     matrixesContainer.appendChild(matrixRow);
@@ -189,6 +184,8 @@ function viewMatrix() {
 function draw() {
     background(0);
     applyMatrix(...viewMatrix());
+
+    const matrices = Object.values(matrixes);
 
     iterate(matrices, iterations);
     drawControl(E);
