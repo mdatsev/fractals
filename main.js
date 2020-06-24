@@ -209,7 +209,8 @@ function draw() {
     drawControl(E);
 
     let closestPoint;
-    let closestLineDist = Infinity;
+    let closestPointDistSq;
+    let closestLineDistSq = Infinity;
     let closestPointOwner;
     let closestLineOwner;
     for (const k in matrices) {
@@ -218,8 +219,10 @@ function draw() {
         const [rx, ry] = getRightControlScreenLoc(m);
         const [ox, oy] = getOriginControlScreenLoc(m);
         for (const [x, y] of [[tx, ty], [rx, ry]]) {
-            if (!closestPoint || distSq(x, y, mouseX, mouseY) < distSq(closestPoint[0], closestPoint[1], mouseX, mouseY)) {
+            const pointDistSq = distSq(x, y, mouseX, mouseY);
+            if (!closestPoint || pointDistSq < closestPointDistSq) {
                 closestPoint = [x, y];
+                closestPointDistSq = pointDistSq;
                 clIdx = k;
             }
         }
@@ -227,23 +230,26 @@ function draw() {
         const td = distToSegmentSq(mouseX, mouseY, tx, ty, ox, oy);
         const rd = distToSegmentSq(mouseX, mouseY, rx, ry, ox, oy);
         const maxd = Math.min(td, rd);
-        if (closestLineDist > maxd) {
-            closestLineDist = maxd;
+        if (closestLineDistSq > maxd) {
+            closestLineDistSq = maxd;
             closestLineOwner = k;
         }
         
     }
-    console.log(closestLineDist)
+    console.log(closestLineDistSq)
 
     for (const k in matrices) {
-        drawControl(matrices[k], k == closestLineOwner);
+        const selected = k == closestLineOwner && Math.sqrt(closestLineDistSq) < scaleFactor / 70;
+        drawControl(matrices[k], selected);
     }
-    strokeWeight(10/500);
-    noFill();
-    stroke(255, 255, 255);
-    const [x, y] = transform(inv(viewMatrix()), closestPoint);
-    // console.log(x, y);
-    circle(x, y, 1/80);
+    if (Math.sqrt(closestPointDistSq) < scaleFactor / 70) {
+        strokeWeight(10/500);
+        noFill();
+        stroke(255, 255, 255);
+        const [x, y] = transform(inv(viewMatrix()), closestPoint);
+        // console.log(x, y);
+        circle(x, y, 1/80);
+    }
 }
 
 let scaleFactor = 500;
