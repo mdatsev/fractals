@@ -45,16 +45,28 @@ function drawBaseImage(t) {
     pop();
 }
 
-function drawControl(t, selected) {
+function drawControl(t, action) {
     push();
     applyMatrix(...t);
 
-    stroke(255, 204, 0, selected ? 255 : 60);
+    stroke(255, 204, 0, action ? 255 : 60);
     strokeWeight(10/500);
     noFill();
 
+    if (action == 'right') {
+        fill(255, 204, 0,);
+    } else {
+        noFill();
+    }
+
     line(0, 0, 1, 0);
     circle(1, 0, 1 / 10);
+
+    if (action == 'top') {
+        fill(255, 204, 0,);
+    } else {
+        noFill();
+    }
 
     line(0, -1, 0, 0);
     circle(0, -1, 1 / 10);
@@ -201,6 +213,10 @@ function distToSegmentSq(x, y, x1, y1, x2, y2) {
   return distSq(x, y, x1 + t * (x2 - x1), y1 + t * (y2 - y1));
 }
 
+
+let closestOwner = -1;
+let closestAction;
+
 function draw() {
     background(0);
     applyMatrix(...viewMatrix());
@@ -208,47 +224,8 @@ function draw() {
     iterate(Object.values(matrices), iterations);
     drawControl(E);
 
-    let closestPoint;
-    let closestPointDistSq;
-    let closestLineDistSq = Infinity;
-    let closestPointOwner;
-    let closestLineOwner;
     for (const k in matrices) {
-        const m = matrices[k];
-        const [tx, ty] = getTopControlScreenLoc(m);
-        const [rx, ry] = getRightControlScreenLoc(m);
-        const [ox, oy] = getOriginControlScreenLoc(m);
-        for (const [x, y] of [[tx, ty], [rx, ry]]) {
-            const pointDistSq = distSq(x, y, mouseX, mouseY);
-            if (!closestPoint || pointDistSq < closestPointDistSq) {
-                closestPoint = [x, y];
-                closestPointDistSq = pointDistSq;
-                clIdx = k;
-            }
-        }
-
-        const td = distToSegmentSq(mouseX, mouseY, tx, ty, ox, oy);
-        const rd = distToSegmentSq(mouseX, mouseY, rx, ry, ox, oy);
-        const maxd = Math.min(td, rd);
-        if (closestLineDistSq > maxd) {
-            closestLineDistSq = maxd;
-            closestLineOwner = k;
-        }
-        
-    }
-    console.log(closestLineDistSq)
-
-    for (const k in matrices) {
-        const selected = k == closestLineOwner && Math.sqrt(closestLineDistSq) < scaleFactor / 70;
-        drawControl(matrices[k], selected);
-    }
-    if (Math.sqrt(closestPointDistSq) < scaleFactor / 70) {
-        strokeWeight(10/500);
-        noFill();
-        stroke(255, 255, 255);
-        const [x, y] = transform(inv(viewMatrix()), closestPoint);
-        // console.log(x, y);
-        circle(x, y, 1/80);
+        drawControl(matrices[k], closestOwner == k ? closestAction : null);
     }
 }
 
@@ -293,6 +270,53 @@ function getTopControlScreenLoc(t) {
 
 function getOriginControlScreenLoc(t) {
     return transform(viewMatrix(), t, [0, 0]);
+}
+
+function mousePressed() {
+    let closestPointDistSq = Infinity;
+    let closestLineDistSq = Infinity;
+    for (const k in matrices) {
+        const m = matrices[k];
+        const [tx, ty] = getTopControlScreenLoc(m);
+        const [rx, ry] = getRightControlScreenLoc(m);
+        const [ox, oy] = getOriginControlScreenLoc(m);
+
+        const topDistSq = distSq(tx, ty, mouseX, mouseY);
+        if (topDistSq < closestPointDistSq) {
+            closestPointDistSq = topDistSq;
+        }
+
+        const rightDistSq = distSq(rx, ry, mouseX, mouseY);
+        if (rightDistSq < closestPointDistSq) {
+            closestPointDistSq = rightDistSq;
+        }
+
+        const td = distToSegmentSq(mouseX, mouseY, tx, ty, ox, oy);
+        const rd = distToSegmentSq(mouseX, mouseY, rx, ry, ox, oy);
+        const maxd = Math.min(td, rd);
+        if (closestLineDistSq > maxd) {
+            closestLineDistSq = maxd;
+            closestOwner = k;
+        }
+        
+        const isInCircle = Math.sqrt(closestPointDistSq) < scaleFactor / 50;
+        console.log(closestPointDistSq)
+        if (topDistSq == closestPointDistSq && isInCircle) {
+            closestAction = 'top';
+        }
+        if (rightDistSq == closestPointDistSq && isInCircle) {
+            closestAction = 'right';
+        }
+        if (!closestAction && closestLineDistSq == maxd && Math.sqrt(closestLineDistSq) < scaleFactor / 70) {
+            closestAction = 'origin';
+        }
+    }
+    console.log(closestAction);
+}
+
+function mouseReleased() {
+    closestOwner = -1;
+    closestAction = null;
 }
 
 function mouseDragged() {
