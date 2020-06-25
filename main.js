@@ -47,10 +47,13 @@ Object.defineProperty(matrices, 'E', {
 let matricesSeq = 1;
 // const matrices = [T1, T2, T3, T4];
 
+const angles = [];
+angles.E = 0.0002;
+
 let iterations = 2;
 let showControls = true;
 let animate = false;
-let animation_speed = 20;
+let animation_speed = 10;
 let trails = 255;
 
 function drawBaseImage(t) {
@@ -197,10 +200,13 @@ function setupMatrixEvents() {
     });
     $('.matrix-value').off();
     $('.matrix-value').on('input', (event) => {
-        const matrixId = event.target.parentElement.attributes['data-matrix'].value;
+        const matrixId = event.target.attributes['data-matrix'].value;
         const matrixField = event.target.attributes['data-matrix-field'].value;
-
-        matrices[matrixId][matrixField] = event.target.value;
+        if (matrixField == -1) {
+            angles[matrixId] = event.target.value;
+        } else {
+            matrices[matrixId][matrixField] = event.target.value;
+        }
     });
 }
 
@@ -211,41 +217,46 @@ function addMatrix(addedMatrix=[1,0,0,1,0,0]) {
     matrixRow.classList.add("row");
     matrixRow.classList.add("matrix");
 
+    let new_matrix = $.extend(true, [], addedMatrix);
+    matrices[matricesSeq] = new_matrix;
+    angles[matricesSeq] = Math.random() / 10000;
+
     matrixRow.id = "matrix-row-" + matricesSeq;
     matrixRow.innerHTML = `
         <h5 class="col"> Matrix ${matricesSeq}</h5>
-        <label class="col matrix-label">rotation:
-            <input value="${addedMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5'></input>
-        </label>
-        <button class="btn btn-warning delete-matrix" data-matrix="${matricesSeq}">Delete matrix</button> 
+        
+            <label class="col matrix-label">rotation:
+                <input value="${angles[matricesSeq]}" class="form-control col matrix-value" data-matrix-field='-1' data-matrix="${matricesSeq}"></input>
+            </label>
+        <button class="btn btn-warning delete-matrix" data-matrix="${matricesSeq}" >Delete matrix</button> 
         <div class="row matrix-row" data-matrix="${matricesSeq}">
             <label class="col matrix-label">a: 
-                <input value="${addedMatrix[0]}" class="form-control matrix-value" data-matrix-field='0'></input>
+                <input value="${addedMatrix[0]}" class="form-control matrix-value" data-matrix-field='0' data-matrix="${matricesSeq}"></input>
             </label>
             <label class="col matrix-label">b: 
-                <input value="${addedMatrix[1]}" class="form-control col matrix-value" data-matrix-field='1'></input>
+                <input value="${addedMatrix[1]}" class="form-control col matrix-value" data-matrix-field='1' data-matrix="${matricesSeq}"></input>
             </label>
             
             <label for="matrix-e" class="col matrix-label">tx:
-                <input value="${addedMatrix[4]}" class="form-control col matrix-value" data-matrix-field='4'></input>
+                <input value="${addedMatrix[4]}" class="form-control col matrix-value" data-matrix-field='4' data-matrix="${matricesSeq}"></input>
             </label>
         </div>
         <div class="row matrix-row" data-matrix="${matricesSeq}">
             <label class="col matrix-label">c:
-                <input value="${addedMatrix[2]}" class="form-control col matrix-value" data-matrix-field='2'></input>
+                <input value="${addedMatrix[2]}" class="form-control col matrix-value" data-matrix-field='2' data-matrix="${matricesSeq}"></input>
             </label>
             
             <label class="col matrix-label">d:
-                <input value="${addedMatrix[3]}" class="form-control col matrix-value" data-matrix-field='3'></input>
+                <input value="${addedMatrix[3]}" class="form-control col matrix-value" data-matrix-field='3' data-matrix="${matricesSeq}"></input>
             </label>
             
             <label class="col matrix-label">ty:
-                <input value="${addedMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5'></input>
+                <input value="${addedMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5' data-matrix="${matricesSeq}"></input>
             </label>
         </div>
     `;
-    let new_matrix = $.extend(true, [], addedMatrix);
-    matrices[matricesSeq++] = new_matrix;
+
+    matricesSeq++;
     
     matricesContainer.appendChild(matrixRow);
 
@@ -308,8 +319,6 @@ function draw() {
         }
     }
     if (animate) {
-        const angles = [0.001, 0.0016, 0.0018, 0.0049, 0.0156, 0.0193];
-        angles.E = 0.002;
         for (const k in {E, ...matrices}) {
             mat2d.rotate(matrices[k], matrices[k], angles[k] * animation_speed);
         }
