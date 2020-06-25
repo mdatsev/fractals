@@ -50,7 +50,7 @@ const presets = {
     }
 } 
 
-const matrices = presets.koch;
+const matrices =  $.extend(true, {}, presets.sierpinski);
 let matricesSeq = 1;
 // const matrices = [T1, T2, T3, T4];
 Object.defineProperty(matrices, 'E', {
@@ -62,6 +62,9 @@ Object.defineProperty(matrices, 'E', {
 
 let iterations = 2;
 let showControls = true;
+let animate = false;
+let animation_speed = 20;
+let trails = 255;
 
 function drawBaseImage(t) {
     push();
@@ -149,14 +152,33 @@ function setup() {
             }
         });
 
+        $('#animate').change(function() {
+            animate = this.checked;
+        });
+
+        $('#enable-trails').change(function() {
+            trails = this.checked ? 10 : 255;
+        });
+
         for (const m of Object.values(matrices)) {
             addMatrix(m);
         }
+
+        //aniamtionspeed slider
+        const valueSpan = $('.valueSpan2');
+        const value = $('#customRange11');
+        valueSpan.html(value.val());
+        value.on('input change', () => {
+            animation_speed = value.val();
+            valueSpan.html(value.val());
+        });
     });
 }
 
 function loadPreset(presetMatrices) {
     matricesSeq = 1;
+
+    console.log(presetMatrices);
 
     for (const elem of $("#matrices-container").children()) {
         elem.parentElement.removeChild(elem);
@@ -189,7 +211,7 @@ function setupMatrixEvents() {
     });
 }
 
-function addMatrix(defaultMatrix=[0,0,0,0,0,0]) {
+function addMatrix(defaultMatrix=[1,0,0,1,0,0]) {
     let matricesContainer = document.getElementById("matrices-container");
 
     let matrixRow = document.createElement("div");
@@ -229,7 +251,9 @@ function iterate(matrices, depth, curr = matrices) {
     for (const m1 of curr) {
         const new_matrices = [];
         for (const m2 of matrices) {
-            new_matrices.push(rot(mul(m1,inv(E),  m2), new Date() / 1000));
+            const new_matrix = mul(m1,inv(E),  m2);
+
+            new_matrices.push(( animate ? rot(new_matrix, new Date() / (10000 / animation_speed)) : new_matrix ));
         }
         if (depth > 0) {
             iterate(matrices, depth - 1, new_matrices);
@@ -266,7 +290,7 @@ let closestOwner = -1;
 let closestAction;
 
 function draw() {
-    background(0, 0, 0, 10);
+    background(0, 0, 0, trails);
     applyMatrix(...viewMatrix());
 
     iterate(Object.values(matrices), iterations);
