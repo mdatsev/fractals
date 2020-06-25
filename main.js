@@ -12,19 +12,6 @@ function matrix(a, b, c, d, e, f) {
     return m;
 }
 const W = 512, H = 512;
-const T1 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
-                  1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 0, 0);
-
-const T2 = matrix(1/3 * Math.cos( 60* rad), -1/3 * Math.sin( 60* rad),
-                  1/3 * Math.sin( 60* rad),  1/3 * Math.cos( 60* rad), 1/3, 0);
-
-const T3 = matrix(1/3 * Math.cos(-60* rad), -1/3 * Math.sin(-60* rad),
-                  1/3 * Math.sin(-60* rad), 1/3 * Math.cos(-60* rad), 1/2, -Math.sqrt(3)/6);
-
-const T4 = matrix(1/3 * Math.cos( 0 * rad), -1/3 * Math.sin( 0 * rad),
-                  1/3 * Math.sin( 0 * rad),  1/3 * Math.cos( 0 * rad), 2/3, 0);
-
-
 const E = matrix(1, 0, 0, 1, 0, 0);
 const presets = {
     koch: {
@@ -50,15 +37,15 @@ const presets = {
     }
 } 
 
-const matrices =  $.extend(true, {}, presets.sierpinski);
-let matricesSeq = 1;
-// const matrices = [T1, T2, T3, T4];
+let matrices = [];
 Object.defineProperty(matrices, 'E', {
     value: E,
     writable: true,
     enumerable: false,
     configurable: true
 });
+let matricesSeq = 1;
+// const matrices = [T1, T2, T3, T4];
 
 let iterations = 2;
 let showControls = true;
@@ -76,8 +63,12 @@ function drawBaseImage(t) {
 function drawControl(t, action) {
     push();
     applyMatrix(...t);
-
-    stroke(255, 204, 0, action ? 255 : 60);
+    
+    if (t == E) {
+        stroke(255, 255, 255, action ? 255 : 60);
+    } else {
+        stroke(255, 204, 0, action ? 255 : 60);
+    }
     strokeWeight(10/500);
     noFill();
 
@@ -172,6 +163,7 @@ function setup() {
             animation_speed = value.val();
             valueSpan.html(value.val());
         });
+        loadPreset(presets.sierpinski);
     });
 }
 
@@ -194,6 +186,7 @@ function loadPreset(presetMatrices) {
 }
 
 function setupMatrixEvents() {
+    $('.delete-matrix').off();
     $('.delete-matrix').on('click', function(event) {
         const matrixId = event.target.attributes['data-matrix'].value;
     
@@ -202,7 +195,7 @@ function setupMatrixEvents() {
         let row = document.getElementById('matrix-row-' + matrixId);
         row.parentElement.removeChild(row);
     });
-
+    $('.matrix-value').off();
     $('.matrix-value').on('input', (event) => {
         const matrixId = event.target.parentElement.attributes['data-matrix'].value;
         const matrixField = event.target.attributes['data-matrix-field'].value;
@@ -211,7 +204,7 @@ function setupMatrixEvents() {
     });
 }
 
-function addMatrix(defaultMatrix=[1,0,0,1,0,0]) {
+function addMatrix(addedMatrix=[1,0,0,1,0,0]) {
     let matricesContainer = document.getElementById("matrices-container");
 
     let matrixRow = document.createElement("div");
@@ -220,26 +213,38 @@ function addMatrix(defaultMatrix=[1,0,0,1,0,0]) {
 
     matrixRow.id = "matrix-row-" + matricesSeq;
     matrixRow.innerHTML = `
-        <p class="col"> Matrix ${matricesSeq}</p>
+        <h5 class="col"> Matrix ${matricesSeq}</h5>
+        <label class="col matrix-label">rotation:
+            <input value="${addedMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5'></input>
+        </label>
         <button class="btn btn-warning delete-matrix" data-matrix="${matricesSeq}">Delete matrix</button> 
         <div class="row matrix-row" data-matrix="${matricesSeq}">
-            <label for="matrix-a" class="col matrix-label">a: </label>
-            <input value="${defaultMatrix[0]}" class="form-control col matrix-value" data-matrix-field='0' id="matrix-a"></input>
-            <label for="matrix-b" class="col matrix-label">b: </label>
-            <input value="${defaultMatrix[1]}" class="form-control col matrix-value" data-matrix-field='1' id="matrix-b"></input>
-            <label for="matrix-e" class="col matrix-label">e: </label>
-            <input value="${defaultMatrix[4]}" class="form-control col matrix-value" data-matrix-field='4' id="matrix-e"></input>
+            <label class="col matrix-label">a: 
+                <input value="${addedMatrix[0]}" class="form-control matrix-value" data-matrix-field='0'></input>
+            </label>
+            <label class="col matrix-label">b: 
+                <input value="${addedMatrix[1]}" class="form-control col matrix-value" data-matrix-field='1'></input>
+            </label>
+            
+            <label for="matrix-e" class="col matrix-label">tx:
+                <input value="${addedMatrix[4]}" class="form-control col matrix-value" data-matrix-field='4'></input>
+            </label>
         </div>
         <div class="row matrix-row" data-matrix="${matricesSeq}">
-            <label for="matrix-c" class="col matrix-label">c: </label>
-            <input value="${defaultMatrix[2]}" class="form-control col matrix-value" data-matrix-field='2' id="matrix-c"></input>
-            <label for="matrix-d" class="col matrix-label">d: </label>
-            <input value="${defaultMatrix[3]}" class="form-control col matrix-value" data-matrix-field='3' id="matrix-d"></input>
-            <label for="matrix-f" class="col matrix-label">f: </label>
-            <input value="${defaultMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5' id="matrix-f"></input>
+            <label class="col matrix-label">c:
+                <input value="${addedMatrix[2]}" class="form-control col matrix-value" data-matrix-field='2'></input>
+            </label>
+            
+            <label class="col matrix-label">d:
+                <input value="${addedMatrix[3]}" class="form-control col matrix-value" data-matrix-field='3'></input>
+            </label>
+            
+            <label class="col matrix-label">ty:
+                <input value="${addedMatrix[5]}" class="form-control col matrix-value" data-matrix-field='5'></input>
+            </label>
         </div>
     `;
-    let new_matrix = defaultMatrix;
+    let new_matrix = $.extend(true, [], addedMatrix);
     matrices[matricesSeq++] = new_matrix;
     
     matricesContainer.appendChild(matrixRow);
@@ -253,7 +258,8 @@ function iterate(matrices, depth, curr = matrices) {
         for (const m2 of matrices) {
             const new_matrix = mul(m1,inv(E),  m2);
 
-            new_matrices.push(( animate ? rot(new_matrix, new Date() / (10000 / animation_speed)) : new_matrix ));
+            // new_matrices.push(( animate ? rot(new_matrix, new Date() / (10000 / animation_speed)) : new_matrix ));
+            new_matrices.push(new_matrix);
         }
         if (depth > 0) {
             iterate(matrices, depth - 1, new_matrices);
@@ -299,6 +305,13 @@ function draw() {
         drawControl(E);
         for (const k in {E, ...matrices}) {
             drawControl(matrices[k], closestOwner == k ? closestAction : null);
+        }
+    }
+    if (animate) {
+        const angles = [0.001, 0.0016, 0.0018, 0.0049, 0.0156, 0.0193];
+        angles.E = 0.002;
+        for (const k in {E, ...matrices}) {
+            mat2d.rotate(matrices[k], matrices[k], angles[k] * animation_speed);
         }
     }
 }
@@ -423,17 +436,23 @@ function mouseDragged() {
         } else if (closestAction == 'rotate') {
             const [oX, oY] = transform(currMatrix, [0, 0]);
 
-            const p12sq = distSq(0, 0, tX, tY);
-            const p13sq = distSq(0, 0, fX, fY);
+            const p12sq = distSq(oX, oY, tX, tY);
+            const p13sq = distSq(oX, oY, fX, fY);
             const p23sq = distSq(tX, tY, fX, fY);
     
-            const cross = tX * fY - tY * fX;
+            const cross = (tX - oX) * (fY - oY) - (tY - oY) * (fX - oX);
             const det = currMatrix[0] * currMatrix[3] - currMatrix[1] * currMatrix[2];
             const angle = - Math.sign(det) * Math.sign(cross) * Math.acos((p12sq + p13sq - p23sq) / (2 * Math.sqrt(p12sq) * Math.sqrt(p13sq)));
             if (isNaN(angle)) {
                 return;
             }
             mat2d.rotate(currMatrix, currMatrix, angle);
+            const sc = Math.sqrt(p12sq) / Math.sqrt(p13sq);
+            currMatrix[0] *= sc;
+            currMatrix[1] *= sc;
+            currMatrix[2] *= sc;
+            currMatrix[3] *= sc;
+
         } else {
             translateX += mouseX - pmouseX;
             translateY += mouseY - pmouseY;
@@ -443,32 +462,57 @@ function mouseDragged() {
 
 function setupDrawing() {
     var drawerPlugins = [
-        // Drawing tools
-        'Pencil',
-        'Eraser',
-        'Line',
-        'Triangle',
-        'Rectangle',
-        'Circle',
-        'Image',
-        'Polygon',
-
-        // Drawing options
-        //'ColorHtml5',
-        'Color',
-        'ShapeBorder',
-        'BrushSize',
-        'OpacityOption',
-
-        'LineWidth',
-        'StrokeWidth',
+                    // Drawing tools
+                    'Pencil',
+                    'Eraser',
+                    'Text',
+                    'Line',
+                    'ArrowOneSide',
+                    'ArrowTwoSide',
+                    'Triangle',
+                    'Rectangle',
+                    'Circle',
+                    'Image',
+                    'BackgroundImage',
+                    'Polygon',
+                    'ImageCrop',
+        
+                    // Drawing options
+                    //'ColorHtml5',
+                    'Color',
+                    'ShapeBorder',
+                    'BrushSize',
+                    'OpacityOption',
+        
+                    'LineWidth',
+                    'StrokeWidth',
+        
+                    'ShapeContextMenu',
+                    'CloseButton',
+                    'OvercanvasPopup',
+                    'OpenPopupButton',
+                    'MinimizeButton',
+                    'ToggleVisibilityButton',
+                    'MovableFloatingMode',
+                    'FullscreenModeButton',
+        
+                    'TextLineHeight',
+                    'TextAlign',
+        
+                    'TextFontFamily',
+                    'TextFontSize',
+                    'TextFontWeight',
+                    'TextFontStyle',
+                    'TextDecoration',
+                    'TextColor',
+                    'TextBackgroundColor'
     ];
 
     
     var drawingCanvas = new DrawerJs.Drawer(null, {
         plugins: drawerPlugins,
         corePlugins: [
-            'Zoom' // use null here if you want to disable Zoom completely
+            'Zoom',
         ],
         pluginsConfig: {
             Image: {
@@ -536,18 +580,6 @@ function setupDrawing() {
                 fullscreenMode: {
                     position: 'bottom', 
                     compactType: 'popup',
-                    hidden: false,
-                    toggleVisibilityButton: false
-                }
-            },
-            settings : {
-                position : 'right', 
-                positionType: 'inside',					
-                compactType : 'scrollable',
-                hidden: false,	
-                toggleVisibilityButton: false,
-                fullscreenMode: {
-                    position : 'right', 
                     hidden: false,
                     toggleVisibilityButton: false
                 }
