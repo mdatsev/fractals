@@ -337,7 +337,7 @@ function draw() {
 let scaleFactor = 500;
 let translateX = 0.0;
 let translateY = 0.0;
-let zoomSensitivity = 0.01;
+let zoomSensitivity = 0.001;
 
 function isMouseOverCanvas() {
     return document.getElementById('canvas-container').mouseIsOver;
