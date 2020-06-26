@@ -59,6 +59,7 @@ let trails = 255;
 function drawBaseImage(t) {
     push();
     applyMatrix(...t);
+    fill(255, 255, 255, 255);
     image(texture, 0, -1, 1, 1);
     pop();
 }
@@ -76,7 +77,7 @@ function drawControl(t, action) {
     noFill();
 
     if (action == 'right') {
-        fill(255, 204, 0,);
+        fill(255, 204, 0);
     } else {
         noFill();
     }
@@ -85,7 +86,7 @@ function drawControl(t, action) {
     circle(1, 0, 1 / 10);
 
     if (action == 'top') {
-        fill(255, 204, 0,);
+        fill(255, 204, 0);
     } else {
         noFill();
     }
@@ -219,7 +220,7 @@ function addMatrix(addedMatrix=[1,0,0,1,0,0]) {
 
     let new_matrix = $.extend(true, [], addedMatrix);
     matrices[matricesSeq] = new_matrix;
-    angles[matricesSeq] = Math.random() / 10000;
+    angles[matricesSeq] = Math.random() * 10;
 
     matrixRow.id = "matrix-row-" + matricesSeq;
     matrixRow.innerHTML = `
@@ -272,7 +273,7 @@ function iterate(matrices, depth, curr = matrices) {
             // new_matrices.push(( animate ? rot(new_matrix, new Date() / (10000 / animation_speed)) : new_matrix ));
             new_matrices.push(new_matrix);
         }
-        if (depth > 0) {
+        if (depth > 1) {
             iterate(matrices, depth - 1, new_matrices);
         } else {
             drawBaseImage(m1);
@@ -320,7 +321,7 @@ function draw() {
     }
     if (animate) {
         for (const k in {E, ...matrices}) {
-            mat2d.rotate(matrices[k], matrices[k], angles[k] * animation_speed);
+            mat2d.rotate(matrices[k], matrices[k], angles[k] / 10000 * animation_speed );
         }
     }
 }
