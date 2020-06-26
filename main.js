@@ -264,6 +264,14 @@ function addMatrix(addedMatrix=[1,0,0,1,0,0]) {
     setupMatrixEvents();
 }
 
+function changeMatrix(indx) {
+    let matrixDiv = $(`#matrix-row-${indx}`)
+
+    for(i = 0; i < matrices[indx].length; i++) {
+        matrixDiv.find(`input[data-matrix-field=${i}]`).attr("value", matrices[indx][i]);
+    }
+}
+
 function iterate(matrices, depth, curr = matrices) {
     for (const m1 of curr) {
         const new_matrices = [];
@@ -329,7 +337,7 @@ function draw() {
 let scaleFactor = 500;
 let translateX = 0.0;
 let translateY = 0.0;
-let zoomSensitivity = 0.001;
+let zoomSensitivity = 0.01;
 
 function isMouseOverCanvas() {
     return document.getElementById('canvas-container').mouseIsOver;
@@ -437,12 +445,15 @@ function mouseDragged() {
         if (closestAction == 'origin') {
             currMatrix[4] += dX;
             currMatrix[5] += dY;
+            changeMatrix(closestOwner);
         } else if (closestAction == 'right') {
             currMatrix[0] += dX;
             currMatrix[1] += dY;
+            changeMatrix(closestOwner);
         } else if (closestAction == 'top') {
             currMatrix[2] -= dX;
             currMatrix[3] -= dY;
+            changeMatrix(closestOwner);
         } else if (closestAction == 'rotate') {
             const [oX, oY] = transform(currMatrix, [0, 0]);
 
@@ -462,7 +473,7 @@ function mouseDragged() {
             currMatrix[1] *= sc;
             currMatrix[2] *= sc;
             currMatrix[3] *= sc;
-
+            changeMatrix(closestOwner);
         } else {
             translateX += mouseX - pmouseX;
             translateY += mouseY - pmouseY;
